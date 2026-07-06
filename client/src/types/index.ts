@@ -142,6 +142,7 @@ export interface ServerToClientEvents {
   'room:joined': (payload: RoomStatePayload) => void
   'room:updated': (participants: Participant[]) => void
   'room:error': (message: string) => void
+  'drawing:update': (object: CanvasObject) => void
   'draw:stroke': (stroke: CanvasObject) => void
   'object:upserted': (object: CanvasObject) => void
   'object:batch': (payload: { objects: CanvasObject[] }) => void
@@ -154,6 +155,7 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   'room:create': (payload: RoomCreatePayload) => void
   'room:join': (payload: RoomJoinPayload) => void
+  'drawing:update': (payload: { roomId: string; object: CanvasObject }) => void
   'draw:stroke': (payload: { roomId: string; stroke: CanvasObject }) => void
   'object:upsert': (payload: { roomId: string; object: CanvasObject }) => void
   'object:batch': (payload: { roomId: string; objects: CanvasObject[] }) => void

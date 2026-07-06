@@ -396,6 +396,10 @@ const CanvasBoardComponent = ({ roomId }: CanvasBoardProps) => {
     setSelectedObjectId(draftObject.id)
   }
 
+  const emitLiveDraft = useCallback((object: CanvasObject) => {
+    emitDraw(roomId, object)
+  }, [emitDraw, roomId])
+
   const handlePointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     event.preventDefault()
     setContextMenu(null)
@@ -478,7 +482,14 @@ const CanvasBoardComponent = ({ roomId }: CanvasBoardProps) => {
     }
 
     if (activeTool === 'pencil') {
-      setDraftObject((current) => current && current.type === 'pencil' ? { ...current, points: [...current.points, snappedPoint] } : current)
+      setDraftObject((current) => {
+        if (!current || current.type !== 'pencil') {
+          return current
+        }
+        const nextObject = { ...current, points: [...current.points, snappedPoint] }
+        emitLiveDraft(nextObject)
+        return nextObject
+      })
       return
     }
 
@@ -489,27 +500,62 @@ const CanvasBoardComponent = ({ roomId }: CanvasBoardProps) => {
         deleteObject(target.id)
         emitDelete(roomId, target.id)
       }
-      setDraftObject((current) => current && current.type === 'eraser' ? { ...current, points: [...current.points, snappedPoint] } : current)
+      setDraftObject((current) => {
+        if (!current || current.type !== 'eraser') {
+          return current
+        }
+        const nextObject = { ...current, points: [...current.points, snappedPoint] }
+        emitLiveDraft(nextObject)
+        return nextObject
+      })
       return
     }
 
     if (activeTool === 'line' || activeTool === 'arrow') {
-      setDraftObject((current) => current && (current.type === 'line' || current.type === 'arrow') ? { ...current, end: snappedPoint } : current)
+      setDraftObject((current) => {
+        if (!current || (current.type !== 'line' && current.type !== 'arrow')) {
+          return current
+        }
+        const nextObject = { ...current, end: snappedPoint }
+        emitLiveDraft(nextObject)
+        return nextObject
+      })
       return
     }
 
     if (activeTool === 'rectangle') {
-      setDraftObject((current) => current && current.type === 'rectangle' ? { ...current, x: Math.min(current.x, snappedPoint.x), y: Math.min(current.y, snappedPoint.y), width: Math.abs(snappedPoint.x - current.x), height: Math.abs(snappedPoint.y - current.y) } : current)
+      setDraftObject((current) => {
+        if (!current || current.type !== 'rectangle') {
+          return current
+        }
+        const nextObject = { ...current, x: Math.min(current.x, snappedPoint.x), y: Math.min(current.y, snappedPoint.y), width: Math.abs(snappedPoint.x - current.x), height: Math.abs(snappedPoint.y - current.y) }
+        emitLiveDraft(nextObject)
+        return nextObject
+      })
       return
     }
 
     if (activeTool === 'circle') {
-      setDraftObject((current) => current && current.type === 'circle' ? { ...current, radius: Math.max(0, Math.hypot(snappedPoint.x - current.center.x, snappedPoint.y - current.center.y)) } : current)
+      setDraftObject((current) => {
+        if (!current || current.type !== 'circle') {
+          return current
+        }
+        const nextObject = { ...current, radius: Math.max(0, Math.hypot(snappedPoint.x - current.center.x, snappedPoint.y - current.center.y)) }
+        emitLiveDraft(nextObject)
+        return nextObject
+      })
       return
     }
 
     if (activeTool === 'ellipse') {
-      setDraftObject((current) => current && current.type === 'ellipse' ? { ...current, radiusX: Math.max(0, Math.abs(snappedPoint.x - current.center.x)), radiusY: Math.max(0, Math.abs(snappedPoint.y - current.center.y)) } : current)
+      setDraftObject((current) => {
+        if (!current || current.type !== 'ellipse') {
+          return current
+        }
+        const nextObject = { ...current, radiusX: Math.max(0, Math.abs(snappedPoint.x - current.center.x)), radiusY: Math.max(0, Math.abs(snappedPoint.y - current.center.y)) }
+        emitLiveDraft(nextObject)
+        return nextObject
+      })
       return
     }
   }

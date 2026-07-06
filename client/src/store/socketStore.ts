@@ -92,6 +92,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       return
     }
 
+    socket.emit('drawing:update', { roomId, object })
     socket.emit('draw:stroke', { roomId, stroke: object })
   },
   emitUpsert: (roomId, object) => {

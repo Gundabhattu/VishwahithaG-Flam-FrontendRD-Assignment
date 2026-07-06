@@ -110,6 +110,10 @@ export const CanvasPage = () => {
       setIsBootstrapped(true)
     }
 
+    const handleDrawingUpdate = (object: CanvasObject) => {
+      useCanvasStore.getState().upsertObject(object)
+    }
+
     const retryJoin = window.setTimeout(() => {
       if (!joined) {
         joinRoom(resolvedRoomId, userName)
@@ -142,6 +146,7 @@ export const CanvasPage = () => {
     socket.on('room:joined', handleJoined)
     socket.on('room:updated', handleUpdated)
     socket.on('room:error', handleError)
+    socket.on('drawing:update', handleDrawingUpdate)
     socket.on('draw:stroke', handleStroke)
     socket.on('object:upserted', handleUpsert)
     socket.on('object:batch', handleBatch)
@@ -158,6 +163,7 @@ export const CanvasPage = () => {
       socket.off('room:joined', handleJoined)
       socket.off('room:updated', handleUpdated)
       socket.off('room:error', handleError)
+      socket.off('drawing:update', handleDrawingUpdate)
       socket.off('draw:stroke', handleStroke)
       socket.off('object:upserted', handleUpsert)
       socket.off('object:batch', handleBatch)

@@ -7,6 +7,7 @@ const roomService = new RoomService()
 
 const broadcastRoomParticipants = (io: Server, roomId: string) => {
   const roomState = roomService.getSnapshot(roomId)
+  console.log('[socket] room participants update', { roomId, sockets: roomState.participants.map((participant) => participant.id) })
   io.to(roomId).emit('room:updated', roomState.participants)
 }
 
@@ -17,6 +18,7 @@ const joinRoom = (io: Server, socket: Socket, roomId: string, userName: string) 
   socket.data.userName = userName
 
   const snapshot = roomService.getSnapshot(roomId)
+  console.log('[socket] room joined', { roomId, socketId: socket.id, userName, socketsInRoom: snapshot.participants.map((participant) => participant.id) })
   socket.emit('room:joined', {
     roomId,
     userName: participant.userName,
@@ -70,7 +72,29 @@ export const registerSocketHandlers = (io: Server) => {
 
       const object = (payload as { stroke: CanvasObject }).stroke
       roomService.upsertObject(roomId, object)
+      console.log('[socket] draw received', { roomId, socketId: socket.id, objectId: object.id })
       socket.to(roomId).emit('draw:stroke', object)
+      console.log('[socket] draw broadcast', { roomId, sender: socket.id })
+      io.to(roomId).emit('room:state', roomService.getSnapshot(roomId))
+    })
+
+    socket.on('drawing:update', (payload) => {
+      if (!payload || typeof payload !== 'object' || !validateObjectPayload((payload as { object?: unknown }).object)) {
+        socket.emit('room:error', 'Invalid drawing payload')
+        return
+      }
+
+      const roomId = (payload as { roomId?: unknown }).roomId
+      if (typeof roomId !== 'string' || !roomId) {
+        socket.emit('room:error', 'Invalid room id')
+        return
+      }
+
+      const object = (payload as { object: CanvasObject }).object
+      roomService.upsertObject(roomId, object)
+      console.log('[socket] drawing:update received', { roomId, socketId: socket.id, objectId: object.id })
+      socket.to(roomId).emit('drawing:update', object)
+      console.log('[socket] drawing:update broadcast', { roomId, sender: socket.id })
       io.to(roomId).emit('room:state', roomService.getSnapshot(roomId))
     })
 
@@ -88,7 +112,9 @@ export const registerSocketHandlers = (io: Server) => {
 
       const object = (payload as { object: CanvasObject }).object
       roomService.upsertObject(roomId, object)
+      console.log('[socket] object upsert received', { roomId, socketId: socket.id, objectId: object.id })
       socket.to(roomId).emit('object:upserted', object)
+      console.log('[socket] object upsert broadcast', { roomId, sender: socket.id })
       io.to(roomId).emit('room:state', roomService.getSnapshot(roomId))
     })
 
@@ -106,7 +132,9 @@ export const registerSocketHandlers = (io: Server) => {
       }
 
       objects.forEach((object) => roomService.upsertObject(roomId, object))
+      console.log('[socket] object batch received', { roomId, socketId: socket.id, count: objects.length })
       socket.to(roomId).emit('object:batch', { objects })
+      console.log('[socket] object batch broadcast', { roomId, sender: socket.id, count: objects.length })
       io.to(roomId).emit('room:state', roomService.getSnapshot(roomId))
     })
 
@@ -118,7 +146,9 @@ export const registerSocketHandlers = (io: Server) => {
 
       const deleted = roomService.deleteObject(payload.roomId, payload.objectId)
       if (deleted) {
+        console.log('[socket] delete received', { roomId: payload.roomId, socketId: socket.id, objectId: payload.objectId })
         io.to(payload.roomId).emit('object:deleted', payload)
+        console.log('[socket] delete broadcast', { roomId: payload.roomId, sender: socket.id, objectId: payload.objectId })
         io.to(payload.roomId).emit('room:state', roomService.getSnapshot(payload.roomId))
       }
     })
@@ -147,6 +177,7 @@ export const registerSocketHandlers = (io: Server) => {
       const objects = eventPayload && typeof eventPayload === 'object' && Array.isArray((eventPayload as { objects?: unknown }).objects) ? (eventPayload as { objects: unknown[] }).objects : null
       if (objects) {
         roomService.replaceObjects(roomId, objects as CanvasObject[])
+        console.log('[socket] history snapshot received', { roomId, socketId: socket.id, objectCount: objects.length })
         socket.to(roomId).emit('room:state', roomService.getSnapshot(roomId))
       }
       socket.to(roomId).emit('history:event', { action, payload: eventPayload })
