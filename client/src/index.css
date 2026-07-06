@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #f8fafc;
+  background-color: #020617;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--app-bg, #020617);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.55);
+  color: white;
+}
+
+@layer components {
+  .theme-dark {
+    --app-bg: linear-gradient(135deg, #020617 0%, #111827 100%);
+    --panel: rgba(15, 23, 42, 0.72);
+    --panel-strong: rgba(2, 6, 23, 0.82);
+    --line: rgba(255, 255, 255, 0.11);
+    --text-main: #f8fafc;
+    --text-muted: #cbd5e1;
+    --canvas-bg: rgba(2, 6, 23, 0.96);
+  }
+
+  .theme-light {
+    --app-bg: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
+    --panel: rgba(255, 255, 255, 0.74);
+    --panel-strong: rgba(248, 250, 252, 0.88);
+    --line: rgba(15, 23, 42, 0.12);
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --canvas-bg: rgba(255, 255, 255, 0.96);
+  }
+
+  .glass-panel {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text-main);
+    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+    backdrop-filter: blur(22px);
+    @apply rounded-[28px];
+  }
+
+  .control-surface {
+    border: 1px solid var(--line);
+    background: var(--panel-strong);
+    color: var(--text-muted);
+    @apply rounded-2xl transition;
+  }
+
+  .control-surface:hover {
+    background: color-mix(in srgb, var(--panel-strong), white 8%);
+  }
+
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950;
+  }
+}
