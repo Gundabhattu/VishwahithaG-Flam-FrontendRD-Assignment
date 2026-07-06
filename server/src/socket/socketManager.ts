@@ -71,6 +71,7 @@ export const registerSocketHandlers = (io: Server) => {
       const object = (payload as { stroke: CanvasObject }).stroke
       roomService.upsertObject(roomId, object)
       socket.to(roomId).emit('draw:stroke', object)
+      io.to(roomId).emit('room:state', roomService.getSnapshot(roomId))
     })
 
     socket.on('object:upsert', (payload) => {
@@ -88,6 +89,7 @@ export const registerSocketHandlers = (io: Server) => {
       const object = (payload as { object: CanvasObject }).object
       roomService.upsertObject(roomId, object)
       socket.to(roomId).emit('object:upserted', object)
+      io.to(roomId).emit('room:state', roomService.getSnapshot(roomId))
     })
 
     socket.on('object:batch', (payload) => {
@@ -105,6 +107,7 @@ export const registerSocketHandlers = (io: Server) => {
 
       objects.forEach((object) => roomService.upsertObject(roomId, object))
       socket.to(roomId).emit('object:batch', { objects })
+      io.to(roomId).emit('room:state', roomService.getSnapshot(roomId))
     })
 
     socket.on('object:delete', (payload) => {
@@ -116,6 +119,7 @@ export const registerSocketHandlers = (io: Server) => {
       const deleted = roomService.deleteObject(payload.roomId, payload.objectId)
       if (deleted) {
         io.to(payload.roomId).emit('object:deleted', payload)
+        io.to(payload.roomId).emit('room:state', roomService.getSnapshot(payload.roomId))
       }
     })
 
