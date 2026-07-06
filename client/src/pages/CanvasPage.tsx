@@ -79,6 +79,7 @@ export const CanvasPage = () => {
     }
 
     const resolvedRoomId = routeRoomId || roomId || createRoomId()
+    console.log('[room] resolved room', { routeRoomId, roomId, resolvedRoomId, userName })
     setRoomId(resolvedRoomId)
 
     let joined = false
@@ -93,6 +94,7 @@ export const CanvasPage = () => {
     const handleJoined = (payload: { roomId: string; userName: string; participants: Participant[]; objects: CanvasObject[] }) => {
       joined = true
       window.clearTimeout(joinTimeout)
+      console.log('[room] joined', { roomId: payload.roomId, userName: payload.userName, participants: payload.participants.length })
       syncRoomState({ roomId: payload.roomId, userName: payload.userName, participants: payload.participants, connected: true })
       replaceObjects(payload.objects)
       setConnected(true)
@@ -101,6 +103,7 @@ export const CanvasPage = () => {
     }
 
     const handleUpdated = (nextParticipants: Participant[]) => {
+      console.log('[room] participants updated', { roomId: resolvedRoomId, participants: nextParticipants.length, sockets: nextParticipants.map((participant) => participant.id) })
       setParticipants(nextParticipants)
     }
 

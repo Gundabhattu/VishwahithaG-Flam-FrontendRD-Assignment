@@ -19,6 +19,7 @@ const joinRoom = (io: Server, socket: Socket, roomId: string, userName: string) 
 
   const snapshot = roomService.getSnapshot(roomId)
   console.log('[socket] room joined', { roomId, socketId: socket.id, userName, socketsInRoom: snapshot.participants.map((participant) => participant.id) })
+  console.log('[socket] room members', { roomId, count: snapshot.participants.length, roomSize: io.sockets.adapter.rooms.get(roomId)?.size ?? 0 })
   socket.emit('room:joined', {
     roomId,
     userName: participant.userName,

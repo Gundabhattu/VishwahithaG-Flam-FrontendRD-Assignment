@@ -16,6 +16,7 @@ interface SocketState {
   emitDelete: (roomId: string, objectId: string) => void
   emitCursor: (roomId: string, point: Point) => void
   emitHistory: (roomId: string, action: string, payload?: unknown) => void
+  pendingJoin: { roomId: string; userName: string } | null
 }
 
 const getFallbackSocketUrl = () => {
@@ -65,6 +66,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   isReconnecting: false,
   connectionError: null,
   lastConnectionError: null,
+  pendingJoin: null,
   connect: (options) => {
     if (!get().socket) {
       return clientSocket
@@ -72,7 +74,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     if (!clientSocket.connected) {
       clientSocket.auth = { token: socketAuthToken, roomId: options?.roomId, userName: options?.userName }
-      useSocketStore.setState({ connectionError: null, lastConnectionError: null, isReconnecting: true })
+      useSocketStore.setState({ connectionError: null, lastConnectionError: null, isReconnecting: true, pendingJoin: options?.roomId && options?.userName ? { roomId: options.roomId, userName: options.userName } : null })
       clientSocket.connect()
     }
 
@@ -88,6 +90,8 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       return
     }
 
+    console.log('[socket] client join room', { roomId, userName, socketId: socket.id })
+    useSocketStore.setState({ pendingJoin: { roomId, userName } })
     socket.emit('room:join', { roomId, userName })
   },
   emitDraw: (roomId, object) => {
@@ -140,8 +144,24 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   },
 }))
 
-clientSocket.on('connect', () => setTimeout(setConnectedState, 0))
-clientSocket.on('reconnect', () => setTimeout(setConnectedState, 0))
+const sendPendingJoin = () => {
+  const pendingJoin = useSocketStore.getState().pendingJoin
+  if (!pendingJoin) {
+    return
+  }
+
+  clientSocket.emit('room:join', pendingJoin)
+  console.log('[socket] client rejoin room', { roomId: pendingJoin.roomId, userName: pendingJoin.userName, socketId: clientSocket.id })
+}
+
+clientSocket.on('connect', () => {
+  setTimeout(setConnectedState, 0)
+  setTimeout(sendPendingJoin, 0)
+})
+clientSocket.on('reconnect', () => {
+  setTimeout(setConnectedState, 0)
+  setTimeout(sendPendingJoin, 0)
+})
 clientSocket.on('reconnect_attempt', () => useSocketStore.setState({ isReconnecting: true }))
 clientSocket.on('disconnect', setDisconnectedState)
 clientSocket.on('connect_error', (error: Error) => {
