@@ -3,4 +3,4 @@
 [deploy]
 
 [variables]
-NPM_CONFIG_INCLUDE = "dev"'
+NPM_CONFIG_INCLUDE = "dev"
