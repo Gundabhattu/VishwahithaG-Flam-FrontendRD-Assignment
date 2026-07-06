@@ -50,10 +50,14 @@ const flushObjects = (roomId: string) => {
   if (!pendingObjects.size) {
     return
   }
+
   const objects = Array.from(pendingObjects.values())
   pendingObjects.clear()
   clientSocket.emit('object:batch', { roomId, objects })
 }
+
+const setConnectedState = () => useSocketStore.setState({ isConnected: true, isReconnecting: false, connectionError: null, lastConnectionError: null })
+const setDisconnectedState = () => useSocketStore.setState({ isConnected: false, isReconnecting: true })
 
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: clientSocket,
@@ -68,7 +72,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     if (!clientSocket.connected) {
       clientSocket.auth = { token: socketAuthToken, roomId: options?.roomId, userName: options?.userName }
-        useSocketStore.setState({ connectionError: null, isReconnecting: false })
+      useSocketStore.setState({ connectionError: null, lastConnectionError: null, isReconnecting: true })
       clientSocket.connect()
     }
 
@@ -136,8 +140,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   },
 }))
 
-clientSocket.on('connect', () => setTimeout(() => useSocketStore.setState({ isConnected: true, isReconnecting: false, connectionError: null }), 0))
-clientSocket.on('disconnect', () => useSocketStore.setState({ isConnected: false, isReconnecting: true }))
+clientSocket.on('connect', () => setTimeout(setConnectedState, 0))
+clientSocket.on('reconnect', () => setTimeout(setConnectedState, 0))
+clientSocket.on('reconnect_attempt', () => useSocketStore.setState({ isReconnecting: true }))
+clientSocket.on('disconnect', setDisconnectedState)
 clientSocket.on('connect_error', (error: Error) => {
   const currentState = useSocketStore.getState()
   if (currentState.lastConnectionError === error.message) {
@@ -150,6 +156,8 @@ clientSocket.on('connect_error', (error: Error) => {
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     clientSocket.off('connect')
+    clientSocket.off('reconnect')
+    clientSocket.off('reconnect_attempt')
     clientSocket.off('disconnect')
     clientSocket.off('connect_error')
     clientSocket.disconnect()
