@@ -236,6 +236,7 @@ export const CanvasPage = () => {
           <div className="mb-4">
             <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Participants</p>
             <h2 className="mt-1 text-xl font-semibold text-white">Collaborators</h2>
+            <p className="mt-1 text-sm text-slate-400">Everyone in the same room appears here in real time.</p>
           </div>
           <div className="space-y-3">
             {participants.length ? participants.map((participant) => (
@@ -245,7 +246,10 @@ export const CanvasPage = () => {
                     {participant.userName.slice(0, 1).toUpperCase()}
                   </span>
                   <span>
-                    <span className="block">{participant.userName}</span>
+                    <span className="block">
+                      {participant.userName}
+                      {participant.userName === userName ? <span className="ml-2 rounded-full bg-cyan-500/15 px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] text-cyan-300">You</span> : null}
+                    </span>
                     <span className="text-xs text-slate-400">{participant.isTyping ? 'Typing...' : participant.connected ? 'Active' : 'Away'}</span>
                   </span>
                 </span>
